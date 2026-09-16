@@ -1,0 +1,93 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #f7f8fb;
+  color: #0b1220;
+}
+
+.container-app {
+  max-width: 1180px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.75rem;
+  padding: 0.65rem 1.15rem;
+  font-weight: 600;
+  font-size: 0.925rem;
+  transition: all .15s ease;
+  white-space: nowrap;
+}
+.btn-primary {
+  background-color: #2563eb;
+  color: white;
+  box-shadow: 0 1px 2px rgba(16,24,40,.06);
+}
+.btn-primary:hover { background-color: #1d4ed8; }
+.btn-outline {
+  border: 1px solid #d1d5db;
+  color: #111827;
+  background: white;
+}
+.btn-outline:hover { background-color: #f3f4f6; }
+.btn-danger {
+  background-color: #dc2626;
+  color: white;
+}
+.btn-danger:hover { background-color: #b91c1c; }
+.btn-ghost {
+  color: #374151;
+}
+.btn-ghost:hover { background-color: #f3f4f6; }
+
+.card {
+  background: white;
+  border-radius: 1rem;
+  border: 1px solid #eef0f3;
+  box-shadow: 0 1px 2px rgba(16,24,40,.06), 0 1px 3px rgba(16,24,40,.10);
+}
+
+.input {
+  width: 100%;
+  border-radius: 0.65rem;
+  border: 1px solid #d1d5db;
+  padding: 0.6rem 0.85rem;
+  font-size: 0.925rem;
+  outline: none;
+  background: white;
+}
+.input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37,99,235,.15);
+}
+
+.label {
+  font-size: 0.825rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.35rem;
+  display: block;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.2rem 0.65rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+}
