@@ -32,10 +32,14 @@ export default async function UnidadPage({ params }) {
   const videos = contenidos?.filter((c) => c.tipo === "video") || [];
   const archivos = contenidos?.filter((c) => c.tipo !== "video") || [];
 
-  const archivosConUrl = archivos.map((a) => {
-    const { data } = supabase.storage.from("archivos").getPublicUrl(a.url);
-    return { ...a, publicUrl: data.publicUrl };
-  });
+  const archivosConUrl = await Promise.all(
+    archivos.map(async (a) => {
+      const { data } = await supabase.storage
+        .from("archivos")
+        .createSignedUrl(a.url, 60 * 60); // enlace válido por 1 hora
+      return { ...a, publicUrl: data?.signedUrl || null };
+    })
+  );
 
   return (
     <>
@@ -75,7 +79,7 @@ export default async function UnidadPage({ params }) {
               {archivosConUrl.map((a) => (
                 <a
                   key={a.id}
-                  href={a.publicUrl}
+                  href={a.publicUrl || "#"}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="card flex items-center gap-4 p-4 transition hover:-translate-y-0.5 hover:shadow-soft"
