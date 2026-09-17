@@ -44,6 +44,18 @@ export default async function HomePage() {
               </Link>
             </div>
           )}
+
+          <form action="/buscar" method="GET" className="mt-8 flex max-w-xl gap-2">
+            <input
+              type="text"
+              name="q"
+              placeholder="Buscar un PDF, video, materia o unidad..."
+              className="input bg-white"
+            />
+            <button type="submit" className="btn btn-primary shrink-0 px-5">
+              🔍 Buscar
+            </button>
+          </form>
         </div>
       </section>
 

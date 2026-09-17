@@ -6,8 +6,10 @@ import { getYouTubeId } from "@/lib/constants";
 
 const TIPOS = [
   { value: "pdf", label: "PDF" },
+  { value: "imagen", label: "Imagen" },
   { value: "archivo", label: "Otro archivo" },
-  { value: "video", label: "Video de YouTube" }
+  { value: "video", label: "Video de YouTube" },
+  { value: "enlace", label: "Otro enlace" }
 ];
 
 export default function ContenidosAdmin() {
@@ -103,17 +105,21 @@ export default function ContenidosAdmin() {
       return;
     }
 
-    if (tipo === "video") {
-      if (!getYouTubeId(videoUrl)) {
+    if (tipo === "video" || tipo === "enlace") {
+      if (tipo === "video" && !getYouTubeId(videoUrl)) {
         setError("Ese enlace de YouTube no parece válido.");
+        return;
+      }
+      if (tipo === "enlace" && !/^https?:\/\//i.test(videoUrl.trim())) {
+        setError("Escribe un enlace válido (debe empezar con http:// o https://).");
         return;
       }
       setUploading(true);
       const { error } = await supabase.from("contenidos").insert({
         unidad_id: unidadId,
-        tipo: "video",
+        tipo,
         titulo,
-        url: videoUrl,
+        url: videoUrl.trim(),
         orden: contenidos.length + 1
       });
       setUploading(false);
@@ -172,7 +178,7 @@ export default function ContenidosAdmin() {
 
   async function handleDelete(c) {
     if (!confirm(`¿Eliminar "${c.titulo}"?`)) return;
-    if (c.tipo !== "video") {
+    if (c.tipo !== "video" && c.tipo !== "enlace") {
       await supabase.storage.from("archivos").remove([c.url]);
     }
     await supabase.from("contenidos").delete().eq("id", c.id);
@@ -249,7 +255,7 @@ export default function ContenidosAdmin() {
               />
             </div>
 
-            {tipo === "video" ? (
+            {tipo === "video" && (
               <div>
                 <label className="label">Enlace de YouTube</label>
                 <input
@@ -263,13 +269,41 @@ export default function ContenidosAdmin() {
                   video listo para reproducir.
                 </p>
               </div>
-            ) : (
+            )}
+
+            {tipo === "enlace" && (
               <div>
-                <label className="label">Archivo ({tipo === "pdf" ? "PDF" : "cualquier formato"})</label>
+                <label className="label">Dirección del enlace</label>
+                <input
+                  className="input"
+                  value={videoUrl}
+                  onChange={(e) => setVideoUrl(e.target.value)}
+                  placeholder="https://ejemplo.com/recurso"
+                />
+                <p className="mt-1 text-xs text-gray-400">
+                  Úsalo para páginas web, videos de otras plataformas,
+                  formularios, etc. Se mostrará como un botón para abrirlo.
+                </p>
+              </div>
+            )}
+
+            {(tipo === "pdf" || tipo === "archivo" || tipo === "imagen") && (
+              <div>
+                <label className="label">
+                  Archivo (
+                  {tipo === "pdf" ? "PDF" : tipo === "imagen" ? "imagen" : "cualquier formato"}
+                  )
+                </label>
                 <input
                   type="file"
                   required
-                  accept={tipo === "pdf" ? "application/pdf" : undefined}
+                  accept={
+                    tipo === "pdf"
+                      ? "application/pdf"
+                      : tipo === "imagen"
+                      ? "image/*"
+                      : undefined
+                  }
                   className="input"
                   onChange={(e) => setFile(e.target.files?.[0] || null)}
                 />
@@ -297,7 +331,12 @@ export default function ContenidosAdmin() {
                 <div key={c.id} className="flex items-center justify-between rounded-xl border border-gray-100 p-4">
                   <div className="min-w-0">
                     <span className="badge bg-brand-100 text-brand-700">
-                      {c.tipo === "video" ? "Video" : c.tipo === "pdf" ? "PDF" : "Archivo"}
+                      {{
+                        video: "Video",
+                        pdf: "PDF",
+                        imagen: "Imagen",
+                        enlace: "Enlace"
+                      }[c.tipo] || "Archivo"}
                     </span>
                     <p className="mt-1 truncate font-semibold text-ink-900">{c.titulo}</p>
                   </div>

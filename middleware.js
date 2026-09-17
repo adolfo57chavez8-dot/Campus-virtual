@@ -38,7 +38,8 @@ export async function middleware(request) {
     isAdminRoute ||
     request.nextUrl.pathname.startsWith("/ciclo") ||
     request.nextUrl.pathname.startsWith("/materia") ||
-    request.nextUrl.pathname.startsWith("/unidad");
+    request.nextUrl.pathname.startsWith("/unidad") ||
+    request.nextUrl.pathname.startsWith("/buscar");
 
   if (isProtectedRoute && !user) {
     const url = request.nextUrl.clone();
@@ -57,5 +58,5 @@ export async function middleware(request) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/ciclo/:path*", "/materia/:path*", "/unidad/:path*"]
+  matcher: ["/admin/:path*", "/ciclo/:path*", "/materia/:path*", "/unidad/:path*", "/buscar/:path*"]
 };

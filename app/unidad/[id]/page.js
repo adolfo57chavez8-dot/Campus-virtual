@@ -2,15 +2,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import VideoPlayer from "@/components/VideoPlayer";
+import ImageViewer from "@/components/ImageViewer";
+import DocCard from "@/components/DocCard";
+import PanelIA from "@/components/PanelIA";
 import { createClient } from "@/lib/supabase/server";
 import { getYouTubeId } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
-
-const ICONS = {
-  pdf: "📄",
-  archivo: "📎"
-};
 
 export default async function UnidadPage({ params }) {
   const supabase = createClient();
@@ -29,17 +27,27 @@ export default async function UnidadPage({ params }) {
     .eq("unidad_id", params.id)
     .order("orden", { ascending: true });
 
-  const videos = contenidos?.filter((c) => c.tipo === "video") || [];
-  const archivos = contenidos?.filter((c) => c.tipo !== "video") || [];
+  const lista = contenidos || [];
+
+  const videos = lista.filter((c) => c.tipo === "video");
+  const enlaces = lista.filter((c) => c.tipo === "enlace");
+  const archivosStorage = lista.filter((c) => c.tipo === "pdf" || c.tipo === "archivo");
+  const imagenes = lista.filter((c) => c.tipo === "imagen");
+
+  async function firmarUrl(path) {
+    const { data } = await supabase.storage.from("archivos").createSignedUrl(path, 60 * 60);
+    return data?.signedUrl || null;
+  }
 
   const archivosConUrl = await Promise.all(
-    archivos.map(async (a) => {
-      const { data } = await supabase.storage
-        .from("archivos")
-        .createSignedUrl(a.url, 60 * 60); // enlace válido por 1 hora
-      return { ...a, publicUrl: data?.signedUrl || null };
-    })
+    archivosStorage.map(async (a) => ({ ...a, urlFirmada: await firmarUrl(a.url) }))
   );
+  const imagenesConUrl = await Promise.all(
+    imagenes.map(async (a) => ({ ...a, urlFirmada: await firmarUrl(a.url) }))
+  );
+
+  const hayContenido =
+    videos.length + enlaces.length + archivosConUrl.length + imagenesConUrl.length > 0;
 
   return (
     <>
@@ -62,12 +70,22 @@ export default async function UnidadPage({ params }) {
             <h2 className="mb-4 text-xl font-bold text-ink-900">Videos</h2>
             <div className="grid gap-6 lg:grid-cols-2">
               {videos.map((v) => (
-                <VideoPlayer
-                  key={v.id}
-                  titulo={v.titulo}
-                  videoId={getYouTubeId(v.url)}
-                />
+                <VideoPlayer key={v.id} titulo={v.titulo} videoId={getYouTubeId(v.url)} />
               ))}
+            </div>
+          </div>
+        )}
+
+        {imagenesConUrl.length > 0 && (
+          <div className="mt-10">
+            <h2 className="mb-4 text-xl font-bold text-ink-900">Imágenes</h2>
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {imagenesConUrl.map(
+                (img) =>
+                  img.urlFirmada && (
+                    <ImageViewer key={img.id} titulo={img.titulo} url={img.urlFirmada} />
+                  )
+              )}
             </div>
           </div>
         )}
@@ -76,21 +94,35 @@ export default async function UnidadPage({ params }) {
           <div className="mt-10">
             <h2 className="mb-4 text-xl font-bold text-ink-900">Documentos y archivos</h2>
             <div className="grid gap-3 sm:grid-cols-2">
-              {archivosConUrl.map((a) => (
+              {archivosConUrl.map(
+                (a) =>
+                  a.urlFirmada && (
+                    <DocCard key={a.id} titulo={a.titulo} url={a.urlFirmada} tipo={a.tipo} />
+                  )
+              )}
+            </div>
+          </div>
+        )}
+
+        {enlaces.length > 0 && (
+          <div className="mt-10">
+            <h2 className="mb-4 text-xl font-bold text-ink-900">Enlaces</h2>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {enlaces.map((e) => (
                 <a
-                  key={a.id}
-                  href={a.publicUrl || "#"}
+                  key={e.id}
+                  href={e.url}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="card flex items-center gap-4 p-4 transition hover:-translate-y-0.5 hover:shadow-soft"
                 >
                   <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-xl">
-                    {ICONS[a.tipo] || "📎"}
+                    🔗
                   </span>
                   <div className="min-w-0">
-                    <p className="truncate font-semibold text-ink-900">{a.titulo}</p>
+                    <p className="truncate font-semibold text-ink-900">{e.titulo}</p>
                     <p className="text-xs font-semibold uppercase text-brand-600">
-                      Descargar / ver
+                      Abrir enlace
                     </p>
                   </div>
                 </a>
@@ -99,11 +131,13 @@ export default async function UnidadPage({ params }) {
           </div>
         )}
 
-        {videos.length === 0 && archivosConUrl.length === 0 && (
+        {!hayContenido && (
           <div className="card mt-10 p-10 text-center text-gray-500">
             Esta unidad todavía no tiene contenido publicado.
           </div>
         )}
+
+        <PanelIA unidadId={unidad.id} contenidos={lista} />
       </div>
     </>
   );

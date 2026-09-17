@@ -1,0 +1,159 @@
+ACTUALIZACIÓN: ASISTENTE DE IA (GEMINI) + BUSCADOR + MULTIMEDIA
+==================================================================
+
+QUÉ SE AGREGÓ
+==================================================================
+
+1) IA con Gemini (dentro de cada unidad, botón "Asistente de estudio")
+   - 📝 Resumen: elige un PDF o imagen de la unidad y la IA genera un
+     resumen. Se guarda automáticamente y queda visible después.
+   - 🧠 Examen: genera un examen de opción múltiple (5 a 10 preguntas)
+     a partir de un PDF/imagen específico o de toda la unidad (hasta
+     4 archivos). Al terminar, se califica solo y muestra tu nota
+     (sobre 100), qué respondiste bien/mal y la respuesta correcta.
+     Guarda tu historial de notas por unidad.
+   - 💬 Preguntar: puedes escribirle una pregunta a la IA, sobre un
+     documento específico o en general, y te responde en el momento.
+   - 🗒️ Mis notas: cada usuario puede escribir y guardar sus propias
+     notas por unidad (esto no usa IA, es manual).
+   Todo esto lo puede usar cualquier usuario registrado, incluido tú
+   cuando estudias con tu propia cuenta (no es exclusivo del admin).
+
+2) Nuevos tipos de contenido en el panel admin
+   - "Imagen": se sube como archivo y se muestra directamente en la
+     página (con opción de verla en grande).
+   - "Otro enlace": para cualquier URL que no sea de YouTube (otra
+     plataforma de video, una página web, un formulario, etc.). Se
+     muestra como un botón "Abrir enlace" (la mayoría de sitios no
+     dejan incrustarse directamente por seguridad del propio sitio,
+     así que se abren en una pestaña nueva en vez de "dentro" de la
+     página, como si sí ocurre con YouTube).
+
+3) Videos de YouTube en pantalla grande
+   - Cada video ahora tiene un botón "⛶ Pantalla grande" que lo abre
+     en un reproductor ampliado, además del reproductor normal en la
+     tarjeta.
+
+4) PDFs visibles dentro de la misma página
+   - Cada PDF ahora tiene un botón "Ver aquí" que despliega una vista
+     previa del documento sin salir de la unidad, además de la opción
+     de abrirlo/descargarlo en pestaña nueva.
+
+5) Buscador en la pantalla principal
+   - Nueva barra de búsqueda en el home y en /buscar. Busca por
+     nombre de materia, unidad o título de archivo/video, y lleva
+     directo al resultado. (Como todo el contenido requiere sesión
+     iniciada, si alguien busca sin haber iniciado sesión, la web lo
+     manda primero a iniciar sesión — mismo comportamiento que ya
+     tenía el resto de la plataforma).
+
+
+ARCHIVOS INCLUIDOS EN ESTE ZIP (nuevos y modificados)
+==================================================================
+NUEVOS:
+  lib/gemini.js
+  app/api/ia/resumen/route.js
+  app/api/ia/examen/generar/route.js
+  app/api/ia/examen/calificar/route.js
+  app/api/ia/pregunta/route.js
+  components/PanelIA.js
+  components/ImageViewer.js
+  components/DocCard.js
+  app/buscar/page.js
+
+MODIFICADOS (reemplazan a los que ya tienes):
+  components/VideoPlayer.js
+  app/unidad/[id]/page.js
+  app/admin/contenidos/page.js
+  app/page.js
+  middleware.js
+  .env.local.example   (solo como referencia, ver paso 2 abajo)
+
+Fuera del zip, aparte, en un archivo de texto:
+  actualizacion-ia-buscador-multimedia.sql
+
+
+PASO 1: CONSIGUE TU API KEY DE GEMINI (si aún no la tienes lista)
+==================================================================
+1. Ve a https://aistudio.google.com/apikey
+2. Inicia sesión con tu cuenta de Google.
+3. Crea una API key (botón "Create API key").
+4. Cópiala, la vas a necesitar en el paso 3 y 4.
+
+Nota: el uso de la API de Gemini tiene un nivel gratuito con límites
+de uso por minuto/día. Si muchos estudiantes usan la IA al mismo
+tiempo, podrías necesitar activar facturación en Google AI Studio
+más adelante. Para empezar, el plan gratuito es suficiente.
+
+
+PASO 2: EJECUTA EL SQL EN SUPABASE
+==================================================================
+1. Ve a Supabase > SQL Editor > New query.
+2. Pega TODO el contenido de "actualizacion-ia-buscador-multimedia.sql"
+   y dale Run.
+   Esto crea las tablas "notas", "resumenes_ia" y "examenes_ia", y
+   permite los nuevos tipos de contenido "imagen" y "enlace".
+
+
+PASO 3: COPIA LOS ARCHIVOS A TU PROYECTO
+==================================================================
+Copia todos los archivos de este zip a tu proyecto en VS Code,
+respetando exactamente las mismas rutas (reemplaza los que ya
+existan). Las carpetas app/api/ia/ y lib/gemini.js son archivos
+NUEVOS que no existían antes.
+
+
+PASO 4: AGREGA TU API KEY DE GEMINI
+==================================================================
+EN TU COMPUTADORA (para probar con "npm run dev"):
+  Abre tu archivo .env.local (el que ya tienes, NO el .example) y
+  agrégale esta línea nueva:
+
+    GEMINI_API_KEY=tu_api_key_de_gemini_aqui
+
+  Guarda el archivo. Ojo: esta variable NO lleva el prefijo
+  NEXT_PUBLIC_ a propósito, porque debe quedarse solo en el
+  servidor y nunca debe llegar al navegador del usuario (así el
+  usuario nunca puede ver ni robar tu clave).
+
+EN VERCEL (para la web publicada):
+  1. Ve a vercel.com > tu proyecto > pestaña "Settings" >
+     "Environment Variables".
+  2. Agrega una nueva variable:
+       Key:   GEMINI_API_KEY
+       Value: tu_api_key_de_gemini_aqui
+  3. Guarda. Como cambiaste una variable de entorno, Vercel no la
+     aplica sola a lo ya publicado: ve a la pestaña "Deployments",
+     abre el último deployment, dale a los 3 puntos > "Redeploy".
+
+
+PASO 5: SUBE LOS CAMBIOS A GITHUB
+==================================================================
+En la terminal de VS Code, dentro de la carpeta del proyecto:
+
+    git add .
+    git commit -m "Agrega asistente de IA, buscador e imagenes/enlaces"
+    git push
+
+Vercel detecta el push y vuelve a publicar solo. Si ya hiciste el
+Redeploy manual del paso 4 antes del push, no pasa nada, Vercel
+simplemente republicará de nuevo con el código nuevo.
+
+
+LÍMITES A TENER EN CUENTA
+==================================================================
+- La IA puede leer directamente archivos PDF e imágenes. Los "Otros
+  archivos" (Word, PowerPoint, zip, etc.) todavía NO se pueden
+  resumir ni usar para examen con este cambio — solo se pueden
+  subir/descargar como ya funcionaba antes.
+- Por límites técnicos de la API de Gemini, los archivos usados para
+  IA (resumen, examen, preguntas) no deberían pesar más de ~15MB.
+  Archivos más grandes seguirán subiéndose y descargándose bien,
+  simplemente la IA no podrá leerlos.
+- En "Examen de toda la unidad", se usan como máximo los primeros 4
+  PDFs/imágenes de esa unidad, para no sobrepasar el límite de
+  tamaño que acepta Gemini en una sola consulta.
+- La calificación del examen es automática y queda guardada, pero no
+  es un sistema anti-copia de nivel universitario (ver nota de
+  seguridad dentro del archivo .sql). Para un estudio personal está
+  perfecto.
