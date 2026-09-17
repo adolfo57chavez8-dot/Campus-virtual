@@ -136,7 +136,11 @@ export default function ContenidosAdmin() {
 
     const { error: uploadError } = await supabase.storage
       .from("archivos")
-      .upload(path, file, { cacheControl: "3600", upsert: false });
+      .upload(path, file, {
+        cacheControl: "3600",
+        upsert: false,
+        contentType: file.type || (tipo === "pdf" ? "application/pdf" : "application/octet-stream")
+      });
 
     if (uploadError) {
       setUploading(false);

@@ -14,11 +14,16 @@ export default function AdminLayout({ children }) {
     <>
       <Navbar />
       <div className="container-app py-8">
-        <div className="mb-6">
-          <span className="badge bg-ink-900 text-white">Panel de administración</span>
-          <h1 className="mt-2 text-2xl font-extrabold text-ink-900">
-            Gestión del contenido
-          </h1>
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <span className="badge bg-ink-900 text-white">Panel de administración</span>
+            <h1 className="mt-2 text-2xl font-extrabold text-ink-900">
+              Gestión del contenido
+            </h1>
+          </div>
+          <Link href="/" className="btn btn-outline">
+            ← Ir a la página principal
+          </Link>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[220px_1fr]">
