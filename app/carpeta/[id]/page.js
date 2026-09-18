@@ -10,41 +10,44 @@ import { getYouTubeId } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 
-export default async function UnidadPage({ params }) {
+export default async function CarpetaPage({ params }) {
   const supabase = createClient();
 
-  const { data: unidad } = await supabase
-    .from("unidades")
-    .select("id, nombre, descripcion, materia_id, materias(id, nombre, ciclo_id)")
+  const { data: carpeta } = await supabase
+    .from("carpetas")
+    .select("id, nombre, descripcion, unidad_id, carpeta_padre_id")
     .eq("id", params.id)
     .single();
 
-  if (!unidad) notFound();
+  if (!carpeta) notFound();
 
-  const [{ data: todosLosContenidos }, { data: carpetas }] = await Promise.all([
-    supabase
-      .from("contenidos")
-      .select("id, tipo, titulo, url, orden, carpeta_id")
-      .eq("unidad_id", params.id)
-      .order("orden", { ascending: true }),
-    supabase
-      .from("carpetas")
-      .select("id, nombre, descripcion, orden, contenidos(count)")
-      .eq("unidad_id", params.id)
-      .is("carpeta_padre_id", null)
-      .order("orden", { ascending: true })
-  ]);
+  const [{ data: unidad }, { data: carpetaPadre }, { data: todosLosContenidos }, { data: subcarpetas }] =
+    await Promise.all([
+      supabase.from("unidades").select("id, nombre").eq("id", carpeta.unidad_id).single(),
+      carpeta.carpeta_padre_id
+        ? supabase.from("carpetas").select("id, nombre").eq("id", carpeta.carpeta_padre_id).single()
+        : Promise.resolve({ data: null }),
+      supabase
+        .from("contenidos")
+        .select("id, tipo, titulo, url, orden, carpeta_id")
+        .eq("unidad_id", carpeta.unidad_id)
+        .order("orden", { ascending: true }),
+      supabase
+        .from("carpetas")
+        .select("id, nombre, descripcion, orden, contenidos(count)")
+        .eq("carpeta_padre_id", carpeta.id)
+        .order("orden", { ascending: true })
+    ]);
 
   const lista = todosLosContenidos || [];
-  const carpetasRaiz = carpetas || [];
+  const subcarpetasList = subcarpetas || [];
 
-  // Solo lo que está "suelto" en la unidad (no dentro de una carpeta)
-  const enRaiz = lista.filter((c) => !c.carpeta_id);
+  const enEstaCarpeta = lista.filter((c) => c.carpeta_id === carpeta.id);
 
-  const videos = enRaiz.filter((c) => c.tipo === "video");
-  const enlaces = enRaiz.filter((c) => c.tipo === "enlace");
-  const archivosStorage = enRaiz.filter((c) => c.tipo === "pdf" || c.tipo === "archivo");
-  const imagenes = enRaiz.filter((c) => c.tipo === "imagen");
+  const videos = enEstaCarpeta.filter((c) => c.tipo === "video");
+  const enlaces = enEstaCarpeta.filter((c) => c.tipo === "enlace");
+  const archivosStorage = enEstaCarpeta.filter((c) => c.tipo === "pdf" || c.tipo === "archivo");
+  const imagenes = enEstaCarpeta.filter((c) => c.tipo === "imagen");
 
   async function firmarUrl(path) {
     const { data } = await supabase.storage.from("archivos").createSignedUrl(path, 60 * 60);
@@ -59,34 +62,37 @@ export default async function UnidadPage({ params }) {
   );
 
   const hayContenido =
-    carpetasRaiz.length +
+    subcarpetasList.length +
       videos.length +
       enlaces.length +
       archivosConUrl.length +
       imagenesConUrl.length >
     0;
 
+  const volverHref = carpetaPadre ? `/carpeta/${carpetaPadre.id}` : `/unidad/${carpeta.unidad_id}`;
+  const volverTexto = carpetaPadre ? carpetaPadre.nombre : unidad?.nombre || "la unidad";
+
   return (
     <>
       <Navbar />
       <div className="container-app py-10">
-        <Link
-          href={`/materia/${unidad.materia_id}`}
-          className="text-sm font-semibold text-brand-600"
-        >
-          ← {unidad.materias?.nombre || "Volver a la materia"}
+        <Link href={volverHref} className="text-sm font-semibold text-brand-600">
+          ← {volverTexto}
         </Link>
 
-        <h1 className="mt-3 text-3xl font-extrabold text-ink-900">{unidad.nombre}</h1>
-        {unidad.descripcion && (
-          <p className="mt-2 max-w-2xl text-gray-500">{unidad.descripcion}</p>
+        <div className="mt-3 flex items-center gap-3">
+          <span className="text-2xl">📁</span>
+          <h1 className="text-3xl font-extrabold text-ink-900">{carpeta.nombre}</h1>
+        </div>
+        {carpeta.descripcion && (
+          <p className="mt-2 max-w-2xl text-gray-500">{carpeta.descripcion}</p>
         )}
 
-        {carpetasRaiz.length > 0 && (
+        {subcarpetasList.length > 0 && (
           <div className="mt-10">
             <h2 className="mb-4 text-xl font-bold text-ink-900">Carpetas</h2>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {carpetasRaiz.map((c) => (
+              {subcarpetasList.map((c) => (
                 <Link
                   key={c.id}
                   href={`/carpeta/${c.id}`}
@@ -177,11 +183,11 @@ export default async function UnidadPage({ params }) {
 
         {!hayContenido && (
           <div className="card mt-10 p-10 text-center text-gray-500">
-            Esta unidad todavía no tiene contenido publicado.
+            Esta carpeta todavía no tiene contenido.
           </div>
         )}
 
-        <PanelIA unidadId={unidad.id} contenidos={lista} />
+        <PanelIA unidadId={carpeta.unidad_id} contenidos={lista} />
       </div>
     </>
   );

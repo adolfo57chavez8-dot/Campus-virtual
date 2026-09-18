@@ -39,6 +39,7 @@ export async function middleware(request) {
     request.nextUrl.pathname.startsWith("/ciclo") ||
     request.nextUrl.pathname.startsWith("/materia") ||
     request.nextUrl.pathname.startsWith("/unidad") ||
+    request.nextUrl.pathname.startsWith("/carpeta") ||
     request.nextUrl.pathname.startsWith("/buscar");
 
   if (isProtectedRoute && !user) {
@@ -58,5 +59,12 @@ export async function middleware(request) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/ciclo/:path*", "/materia/:path*", "/unidad/:path*", "/buscar/:path*"]
+  matcher: [
+    "/admin/:path*",
+    "/ciclo/:path*",
+    "/materia/:path*",
+    "/unidad/:path*",
+    "/carpeta/:path*",
+    "/buscar/:path*"
+  ]
 };

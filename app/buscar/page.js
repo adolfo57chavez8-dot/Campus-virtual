@@ -24,7 +24,7 @@ export default async function BuscarPage({ searchParams }) {
     const [{ data: contenidos }, { data: unidades }, { data: materias }] = await Promise.all([
       supabase
         .from("contenidos")
-        .select("id, tipo, titulo, unidad_id, unidades(id, nombre, materia_id)")
+        .select("id, tipo, titulo, unidad_id, carpeta_id, unidades(id, nombre, materia_id)")
         .ilike("titulo", `%${q}%`)
         .limit(30),
       supabase
@@ -120,7 +120,7 @@ export default async function BuscarPage({ searchParams }) {
               {resultadosContenido.map((c) => (
                 <Link
                   key={c.id}
-                  href={`/unidad/${c.unidad_id}`}
+                  href={c.carpeta_id ? `/carpeta/${c.carpeta_id}` : `/unidad/${c.unidad_id}`}
                   className="card flex items-center gap-3 p-4 hover:shadow-soft"
                 >
                   <span className="text-xl">{ICONO[c.tipo] || "📎"}</span>
