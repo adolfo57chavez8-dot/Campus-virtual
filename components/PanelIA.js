@@ -113,6 +113,12 @@ function TabResumen({ unidadId, contenidos, supabase }) {
     }
   }
 
+  async function eliminarResumen(id) {
+    if (!confirm("¿Eliminar este resumen?")) return;
+    await supabase.from("resumenes_ia").delete().eq("id", id);
+    setHistorial((h) => h.filter((r) => r.id !== id));
+  }
+
   if (contenidos.length === 0) {
     return (
       <p className="text-sm text-gray-500">
@@ -148,7 +154,15 @@ function TabResumen({ unidadId, contenidos, supabase }) {
         {cargandoHistorial && <p className="text-sm text-gray-500">Cargando...</p>}
         {historial.map((r) => (
           <div key={r.id} className="rounded-xl border border-gray-100 p-4">
-            <p className="whitespace-pre-wrap text-sm text-gray-700">{r.resumen}</p>
+            <div className="flex items-start justify-between gap-3">
+              <p className="whitespace-pre-wrap text-sm text-gray-700">{r.resumen}</p>
+              <button
+                onClick={() => eliminarResumen(r.id)}
+                className="shrink-0 text-xs font-semibold text-red-600 hover:underline"
+              >
+                Eliminar
+              </button>
+            </div>
           </div>
         ))}
         {!cargandoHistorial && historial.length === 0 && (
@@ -184,6 +198,12 @@ function TabExamen({ unidadId, contenidos, supabase }) {
   useEffect(() => {
     cargarHistorial();
   }, []);
+
+  async function eliminarExamen(id) {
+    if (!confirm("¿Eliminar este examen de tu historial?")) return;
+    await supabase.from("examenes_ia").delete().eq("id", id);
+    setHistorial((h) => h.filter((x) => x.id !== id));
+  }
 
   async function generar() {
     setError("");
@@ -365,7 +385,15 @@ function TabExamen({ unidadId, contenidos, supabase }) {
                 <span className="text-gray-500">
                   {new Date(h.created_at).toLocaleDateString("es")}
                 </span>
-                <span className="font-bold text-ink-900">{h.nota}/100</span>
+                <div className="flex items-center gap-3">
+                  <span className="font-bold text-ink-900">{h.nota}/100</span>
+                  <button
+                    onClick={() => eliminarExamen(h.id)}
+                    className="text-xs font-semibold text-red-600 hover:underline"
+                  >
+                    Eliminar
+                  </button>
+                </div>
               </div>
             ))}
           </div>
